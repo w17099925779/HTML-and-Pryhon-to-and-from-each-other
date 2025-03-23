@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            --md-sys-color-primary: #6750A4;
+            --md-sys-color-surface: #FEF7FF;
+            --md-sys-color-on-primary: #FFFFFF;
+            --md-sys-color-outline: #79747E;
+        }
+        * {
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #808080;
+            min-height: 100vh;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .code-area {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+        textarea {
+            width: 100%;
+            flex: 1;
+            border: 1px solid var(--md-sys-color-outline);
+            border-radius: 8px;
+            padding: 12px;
+            resize: none;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 14px;
+        }
+        .button-container {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin: 10px 0;
+        }
+        .fab {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            border: none;
+            background: var(--md-sys-color-primary);
+            color: var(--md-sys-color-on-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .fab:hover {
+            transform: scale(1.05);
+        }
+        .fab:active {
+            transform: scale(0.95);
+        }
+        h3 {
+            margin: 0 0 12px 0;
+            color: var(--md-sys-color-primary);
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="code-area">
+            <h3>HTML 代码</h3>
+            <textarea id="htmlCode" placeholder="输入HTML代码..."></textarea>
+        </div>
+        <div class="button-container">
+            <button class="fab" onclick="htmlToPython()">↓</button>
+            <button class="fab" onclick="pythonToHtml()">↑</button>
+        </div>
+        <div class="code-area">
+            <h3>Python 代码</h3>
+            <textarea id="pythonCode" placeholder="输入Python代码..."></textarea>
+        </div>
+    </div>
+    <script>
+        function pythonToHtml() {
+            const pythonCode = document.getElementById('pythonCode').value;
+            let html = '';
+            const lines = pythonCode.split('\n');
+
+            lines.forEach(line => {
+                line = line.trim();
+                if (line.startsWith('print')) {
+                    const match = line.match(/print\((.*)\)/);
+                    if (match) {
+                        const content = match[1]
+                            .replace(/'/g, '&#39;')
+                            .replace(/"/g, '&quot;');
+                        html += `<p>${content}</p>\n`;
+                    }
+                } else if (line.includes('=')) {
+                    const [varName, value] = line.split('=').map(s => s.trim());
+                    html += `<script>let ${varName} = ${value};<\/script>\n`;
+                } else if (line) {
+                    html += `<!-- ${line} -->\n`;
+                }
+            });
+
+            html = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+${html}
+</body>
+</html>`;
+            document.getElementById('htmlCode').value = html;
+        }
+
+        function htmlToPython() {
+            const htmlCode = document.getElementById('htmlCode').value;
+            let python = htmlCode
+                .replace(/<p>(.*?)<\/p>/g, (match, content) => {
+                    content = content.replace(/&#39;/g, "'").replace(/&quot;/g, '"');
+                    return `print("${content}")`;
+                })
+                .replace(/<script>let (.*?) = (.*?);<\/script>/g, '$1 = $2')
+                .replace(/<!-- (.*?) -->/g, '$1')
+                .replace(/<[^>]+>/g, '')
+                .replace(/\s*\n\s*/g, '\n')
+                .trim();
+            document.getElementById('pythonCode').value = python;
+        }
+    </script>
+</body>
+</html>
